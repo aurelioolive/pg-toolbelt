@@ -1,5 +1,20 @@
 # @supabase/pg-delta
 
+## 1.0.0-alpha.62
+
+### Minor Changes
+
+- da7aae1: `ResolvedProfile` gains `managedView(factBase, { scope, defaultOwner })`, the view `plan()` diffs under this profile, and `assumedSchemaSeed(targetFactBase, { scope })`, the SQL `planSchemaFiles({ seedAssumedSchemas: true })` replays into a co-located shadow. `AssumedSchemaSeed` is now exported, and hand-built `ResolvedProfile` implementations must add both members.
+
+### Patch Changes
+
+- 4091241: Stop `provisionCoLocatedShadow().cleanup()` from hiding a failed `DROP DATABASE`. A new `onCleanupError` option receives the error when the throwaway `pgdelta_shadow_*` database cannot be dropped; `cleanup()` still resolves. `schema apply` without `--shadow` now prints a warning naming the database to drop manually.
+- 735e44f: Speed up declarative `schema apply`: routine bodies are re-validated in a few round trips instead of one per routine, and the target is extracted while the shadow loads unless the shadow is on the target's server or on a clone of its data directory.
+- 7c1856d: A column that gains `NOT NULL` and a new or changed default in one plan now gets `SET DEFAULT` before `SET NOT NULL`, so a backfill can go between them. When the default can run a user function (directly or through a domain check), the plan commits more than once (such as for an enum `ADD VALUE`), or that order would delay adding a new column to a table that gains several, the plan keeps its previous order. A changed default now also waits for the same-plan creation of what its expression references, so a default cast to a new enum or domain no longer fails at apply on a column that keeps its type.
+- 41d6614: Fix co-located shadow seeding when an assumed-schema object depends on an object pruned from the managed view.
+- aae8fa0: A changed trigger definition is now planned as `CREATE OR REPLACE TRIGGER` instead of `DROP TRIGGER` + `CREATE TRIGGER`. It takes a SHARE ROW EXCLUSIVE lock instead of ACCESS EXCLUSIVE, and for a trigger in the default `ENABLE` state it needs the TRIGGER privilege instead of table ownership. A disabled, replica, or always trigger gets its firing state restored after the replace. Constraint triggers, which `OR REPLACE` does not support, and a statement-level trigger on a partitioned table are still dropped and recreated, as is a trigger whose old definition used a function or column the same plan drops, or one planned from a snapshot saved before this release. A column type change now also rebuilds the triggers that depend on that column.
+- 81bd6cf: Fix planning a new table whose generated column can run a user function but reads none of the table's columns, such as `GENERATED ALWAYS AS (app.f()) STORED`. Postgres can run that function when the column is added, so a function that read a later column failed with `column ... does not exist`. Such a column, and any later column that runs a user function after it, no longer holds back the later columns that run none, so those can land first, which changes what `SELECT *`, an `INSERT` without a column list and the table's row type see. Some shapes still fail as before, such as `id + app.f()`, or an existing function that reads a later column whose type the plan creates.
+
 ## 1.0.0-alpha.61
 
 ### Patch Changes

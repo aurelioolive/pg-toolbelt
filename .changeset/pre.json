@@ -30,6 +30,7 @@
     "canonical-search-path",
     "catalog-export-filter",
     "clean-bees-fetch",
+    "co-located-shadow-cleanup-error",
     "cold-students-vanish",
     "column-grants-survive-object-revoke",
     "column-order-deferred-columns",
@@ -67,6 +68,7 @@
     "fair-plums-compete",
     "fair-rivers-help",
     "famous-eagles-fry",
+    "faster-declarative-load",
     "feat-extract-retries",
     "feat-security-labels",
     "feat-validate-constraint-shortcut",
@@ -138,6 +140,7 @@
     "non-superuser-extract",
     "nonsuperuser-library-caller-fixes",
     "nonsuperuser-shadow-seed",
+    "not-null-after-default",
     "olive-melons-repair",
     "order-rls-policies-after-referenced-tables",
     "orioledb-shadow-seed",
@@ -168,6 +171,7 @@
     "postgis-relocation-guard",
     "postgresql-license",
     "probe-server-version-once",
+    "profile-managed-view-seed",
     "proof-declares-inherited-rewrites",
     "prove-autoseed-outcomes",
     "prove-projection-audit",
@@ -197,6 +201,7 @@
     "schema-first-cli-frontend-reexports",
     "scope-owner-exclusion-ordering",
     "scope-seeded-body-validation",
+    "seed-skip-policy-pruned-dependency",
     "seeded-routine-validation-identity",
     "self-fk-unique-index-export",
     "seq-bounds-public-roles-parse-guard-acl-dedup",
@@ -233,6 +238,7 @@
     "tidy-moons-repair",
     "tidy-zebras-judge",
     "tough-boats-sink",
+    "trigger-def-create-or-replace",
     "unmodeled-drift-custom-delivery",
     "user-mapping-unreadable-role-rename",
     "user-policy-surfaces-supautils-parity-and-comments",
@@ -243,6 +249,7 @@
     "warm-tables-learn",
     "wasm-fdw-dependents",
     "window-function-and-table-rule-depend-edges",
-    "wp3c-plan-segments"
+    "wp3c-plan-segments",
+    "zero-arg-generated-column-order"
   ]
 }
