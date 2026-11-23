@@ -294,8 +294,11 @@ export const tableRules: Record<string, KindRules> = {
       // parsing (guardrail 2), so any inline default conservatively declares
       // rewriteRisk — over-declaring is safe (the proof only fails on
       // UNDER-declared rewrites).
+      // A VIRTUAL generated column (PG 18) is computed on read, so adding one
+      // stores nothing and does not rewrite the table.
       const rewrites =
-        fact.payload["generatedExpr"] != null ||
+        (fact.payload["generatedExpr"] != null &&
+          fact.payload["virtual"] !== true) ||
         fact.payload["identity"] != null ||
         defaultChild !== undefined;
       const spec: ActionSpec = {
@@ -527,6 +530,10 @@ export const tableRules: Record<string, KindRules> = {
       },
       collation: "replace",
       generatedExpr: "replace",
+      // PostgreSQL 18 has no ALTER between STORED and VIRTUAL (SET EXPRESSION
+      // keeps the kind, DROP EXPRESSION rejects a virtual column), so a kind
+      // change replaces the column, like a generatedExpr change.
+      virtual: "replace",
     },
   },
 
@@ -719,8 +726,10 @@ function columnClause(fact: Fact): string {
   const collation = p(fact, "collation");
   if (collation != null) sql += ` COLLATE ${str(collation)}`;
   const generated = p(fact, "generatedExpr");
-  if (generated != null)
-    sql += ` GENERATED ALWAYS AS (${str(generated)}) STORED`;
+  if (generated != null) {
+    const kind = p(fact, "virtual") === true ? "VIRTUAL" : "STORED";
+    sql += ` GENERATED ALWAYS AS (${str(generated)}) ${kind}`;
+  }
   const identity = p(fact, "identity");
   const generation = identityGeneration(identity);
   if (generation === "a" || generation === "d") {

@@ -262,6 +262,12 @@ export const columnsFamily: CatalogFamily = {
               generated && row["default_expr"] != null
                 ? (row["default_expr"] as string)
                 : null,
+            // PG 18 VIRTUAL generated columns (attgenerated 'v') are computed on
+            // read; STORED ones ('s') are written to disk. The kind is column
+            // state, so it is semantic. It is set only for a virtual column, so
+            // a stored or plain column keeps the payload, and the hash, it had
+            // before PG 18 (no captured baseline or snapshot changes).
+            ...(row["generated"] === "v" ? { virtual: true } : {}),
           },
         },
         row,
