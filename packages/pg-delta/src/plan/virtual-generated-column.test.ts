@@ -2,7 +2,8 @@
  * PG 18 VIRTUAL generated columns at the rule level (no DB): the column rule
  * renders the kind it was extracted with, adding a virtual column declares no
  * rewrite (it stores nothing), and a stored ↔ virtual change replaces the
- * column, since PostgreSQL has no ALTER between the two kinds (#606).
+ * column, since PostgreSQL has no ALTER between the two kinds (#606). A type
+ * change of a virtual column stores nothing either, so it declares no rewrite.
  */
 import { describe, expect, test } from "bun:test";
 import { buildFactBase, type Fact } from "../core/fact.ts";
@@ -41,12 +42,15 @@ const plainColumn: Fact = {
     generatedExpr: null,
   },
 };
-const generatedColumn = (kind: "stored" | "virtual"): Fact => ({
+const generatedColumn = (
+  kind: "stored" | "virtual",
+  type = "integer",
+): Fact => ({
   id: { kind: "column", schema: "s", table: "t", name: "v" },
   parent: tableId,
   payload: {
     _position: 2,
-    type: "integer",
+    type,
     notNull: false,
     identity: null,
     collation: null,
@@ -113,6 +117,24 @@ describe("PG 18 VIRTUAL generated columns", () => {
     expect(sql).toEqual([
       `ALTER TABLE "s"."t" DROP COLUMN "v"`,
       `ALTER TABLE "s"."t" ADD COLUMN "v" integer GENERATED ALWAYS AS ((a * 2)) STORED`,
+    ]);
+  });
+
+  test("a type change declares no rewrite for a virtual column; it does for a stored one", () => {
+    const retypeVirtual = plan(
+      base(plainColumn, generatedColumn("virtual")),
+      base(plainColumn, generatedColumn("virtual", "bigint")),
+    );
+    expect(retypeVirtual.actions.map((a) => [a.sql, a.rewriteRisk])).toEqual([
+      [`ALTER TABLE "s"."t" ALTER COLUMN "v" TYPE bigint`, false],
+    ]);
+
+    const retypeStored = plan(
+      base(plainColumn, generatedColumn("stored")),
+      base(plainColumn, generatedColumn("stored", "bigint")),
+    );
+    expect(retypeStored.actions.map((a) => [a.sql, a.rewriteRisk])).toEqual([
+      [`ALTER TABLE "s"."t" ALTER COLUMN "v" TYPE bigint`, true],
     ]);
   });
 });
